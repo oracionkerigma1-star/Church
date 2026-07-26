@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cantoral Litúrgico Interactivo</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #16a085;
+            --background-color: #f8f9fa;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --admin-color: #e67e22;
+            --danger-color: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2.5rem;
+        }
+
+        header p {
+            margin: 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        nav {
+            background-color: var(--secondary-color);
+            display: flex;
+            justify-content: center;
+            padding: 0.8rem;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        nav a, nav button.nav-btn {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: opacity 0.2s;
+        }
+
+        nav a:hover, nav button.nav-btn:hover {
+            opacity: 0.8;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .search-box {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .search-box input {
+            width: 100%;
+            max-width: 500px;
+            padding: 0.8rem 1rem;
+            font-size: 1rem;
+            border: 2px solid #ccc;
+            border-radius: 25px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--secondary-color);
+        }
+
+        h2 {
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            color: var(--primary-color);
+            margin-top: 2rem;
+        }
+
+        /* Panel de Administrador */
+        #adminPanel {
+            display: none;
+            background: #fff3cd;
+            border: 2px solid var(--admin-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        #adminPanel h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        .grid-cantos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .tag {
+            display: inline-block;
+            background-color: #e2e8f0;
+            color: #4a5568;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-bottom: 0.8rem;
+            font-weight: bold;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-admin {
+            background-color: var(--admin-color);
+        }
+
+        .btn-delete {
+            background-color: var(--danger-color);
+            display: none;
+            margin-left: 0.5rem;
+        }
+
+        .card.admin-mode .btn-delete {
+            display: inline-block;
+        }
+
+        /* Ventana Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 2rem;
+            width: 90%;
+            max-width: 650px;
+            border-radius: 8px;
+            position: relative;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #000;
+        }
+
+        .transposer-controls {
+            margin: 1rem 0;
+            background: #e9ecef;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        pre {
+            background: #f4f6f8;
+            padding: 1rem;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: auto;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .modal-img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-top: 1rem;
+            display: block;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            height: 0;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 5px;
+            border: none;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Cantoral Litúrgico</h1>
+        <h1>Mother of Sorrows Church</h1>
+        <p>Coro: 8:30am</p>
+    </header>
+
+    <nav>
+        <a href="#">Inicio</a>
+        <a href="#cantos">Repertorio</a>
+        <button class="nav-btn" onclick="toggleAdminMode()">🔐 Modo Administrador</button>
+    </nav>
+
+    <div class="container" id="cantos">
+        
+        <!-- PANEL DE ADMINISTRADOR -->
+        <div id="adminPanel">
+            <h3>Panel de Administración - Agregar Canto</h3>
+            <div class="form-group">
+                <label for="nuevoTitulo">Título del Canto:</label>
+                <input type="text" id="nuevoTitulo" placeholder="Ej. Pescador de Hombres">
+            </div>
+            <div class="form-group">
+                <label for="nuevoMomento">Momento Litúrgico (Tag):</label>
+                <input type="text" id="nuevoMomento" placeholder="Ej. Ofertorio o Comunión">
+            </div>
+            <div class="form-group">
+                <label for="nuevoTono">Tono Original:</label>
+                <input type="text" id="nuevoTono" placeholder="Ej. C">
+            </div>
+            <div class="form-group">
+                <label for="nuevaLetra">Letra y Acordes:</label>
+                <textarea id="nuevaLetra" rows="3" placeholder="Escribe la letra o acordes..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="nuevoYoutube">Enlace de YouTube (Opcional):</label>
+                <input type="text" id="nuevoYoutube" placeholder="Ej. https://www.youtube.com/watch?v=ABC123xyz">
+            </div>
+            <div class="form-group">
+                <label for="nuevaImagen">Subir o Pegar Imagen/Partitura (Opcional):</label>
+                <input type="file" id="nuevaImagen" accept="image/*">
+                <small style="display:block; margin-top:5px; color:#555;">O puedes presionar <b>Ctrl + V</b> para pegar una imagen desde tu portapapeles.</small>
+            </div>
+            <button class="btn btn-admin" onclick="agregarCanto()">Guardar Canto Completo</button>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Buscar canto por título o momento..." onkeyup="filtrarCantos()">
+        </div>
+
+        <h2>Repertorio de Cantos</h2>
+        
+        <div class="grid-cantos" id="gridCantos">
+            <!-- Los cantos se cargarán automáticamente aquí desde la memoria -->
+        </div>
+
+    </div>
+
+    <!-- VENTANA MODAL -->
+    <div id="modalCanto" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="cerrarCanto()">&times;</span>
+            <h2 id="modalTitulo" style="margin-top:0; border:none;">Título del Canto</h2>
+            
+            <div class="transposer-controls">
+                <span>Tono: <strong id="modalTono">C</strong></span>
+                <div>
+                    <button class="btn" style="margin:0; padding:0.2rem 0.6rem;" onclick="transponer(-1)">- Semitono</button>
+                    <button class="btn" style="margin:0; padding:0.2rem 0.6rem;" onclick="transponer(1)">+ Semitono</button>
+                </div>
+            </div>
+
+            <pre id="modalLetra" style="display:none;"></pre>
+            <img id="modalImagen" class="modal-img" style="display:none;" alt="Partitura del canto">
+            
+            <div id="modalVideoContainer" class="video-container">
+                <iframe id="modalYoutube" src="" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Proyecto de Cantos Litúrgicos. Para mayor gloria de Dios.</p>
+    </footer>
+
+    <!-- SCRIPT DE INTERACTIVIDAD Y PERSISTENCIA -->
+    <script>
+        let imagenBase64Temporal = "";
+        let adminActivo = false;
+
+        // Cargar cantos guardados al abrir la página
+        document.addEventListener("DOMContentLoaded", function() {
+            cargarCantosGuardados();
+        });
+
+        window.addEventListener('paste', function (e) {
+            if (adminActivo) {
+                let items = e.clipboardData.items;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf("image") !== -1) {
+                        let blob = items[i].getAsFile();
+                        let reader = new FileReader();
+                        reader.onload = function (event) {
+                            imagenBase64Temporal = event.target.result;
+                            alert("¡Imagen pegada desde el portapapeles exitosamente!");
+                        };
+                        reader.readAsDataURL(blob);
+                    }
+                }
+            }
+        });
+
+        document.getElementById('nuevaImagen').addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if (file) {
+                let reader = new FileReader();
+                reader.onload = function(event) {
+                    imagenBase64Temporal = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function toggleAdminMode() {
+            let password = prompt("Ingrese la contraseña de Administrador:");
+            if (password === "admin123") {
+                adminActivo = !adminActivo;
+                let panel = document.getElementById('adminPanel');
+                let cards = document.getElementsByClassName('card');
+
+                if (adminActivo) {
+                    panel.style.display = "block";
+                    for (let card of cards) {
+                        card.classList.add('admin-mode');
+                    }
+                    alert("¡Modo Administrador activado!");
+                } else {
+                    panel.style.display = "none";
+                    for (let card of cards) {
+                        card.classList.remove('admin-mode');
+                    }
+                    alert("Modo Administrador cerrado.");
+                }
+            } else if (password !== null) {
+                alert("Contraseña incorrecta.");
+            }
+        }
+
+        function convertirUrlYoutube(url) {
+            if (!url) return "";
+            let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            let match = url.match(regExp);
+            if (match && match[2].length === 11) {
+                return 'https://www.youtube.com/embed/' + match[2];
+            }
+            return url;
+        }
+
+        // Obtener cantos del localStorage
+        function obtenerCantosStorage() {
+            let cantos = localStorage.getItem('cantosLiturgicos');
+            if (!cantos) {
+                // Cantos iniciales por defecto si está vacío
+                let iniciales = [
+                    {
+                        id: 1,
+                        titulo: "Juntos como Hermanos",
+                        momento: "Entrada",
+                        tono: "D",
+                        letra: "[D] Juntos como [A] hermanos, [Bm] miembros de la Iglesia,\n[G] caminamos al [A] encuentro del Se[D]ñor.",
+                        imagen: "",
+                        youtube: "https://www.youtube.com/embed/dQw4w9WgXcQ"
+                    }
+                ];
+                localStorage.setItem('cantosLiturgicos', JSON.stringify(iniciales));
+                return iniciales;
+            }
+            return JSON.parse(cantos);
+        }
+
+        // Renderizar cantos en la pantalla
+        function cargarCantosGuardados() {
+            let grid = document.getElementById('gridCantos');
+            grid.innerHTML = "";
+            let cantos = obtenerCantosStorage();
+
+            cantos.forEach(canto => {
+                let nuevaCard = document.createElement('div');
+                nuevaCard.className = adminActivo ? 'card admin-mode' : 'card';
+                nuevaCard.setAttribute('data-id', canto.id);
+                nuevaCard.setAttribute('data-titulo', canto.titulo.toLowerCase());
+                nuevaCard.setAttribute('data-categoria', canto.momento.toLowerCase());
+
+                let descripcion = canto.letra ? (canto.letra.substring(0, 60) + "...") : "Canto con recursos multimedia adjuntos.";
+
+                // Codificamos los datos de manera segura para pasarlos a la función
+                nuevaCard.innerHTML = `
+                    <span class="tag">${canto.momento}</span>
+                    <h3>${canto.titulo}</h3>
+                    <p><strong>Tono original:</strong> <span class="tono-orig">${canto.tono}</span></p>
+                    <p>${descripcion}</p>
+                    <button class="btn" onclick="abrirCantoPorId(${canto.id})">Ver Canto</button>
+                    <button class="btn btn-delete" onclick="eliminarCanto(${canto.id})">Borrar</button>
+                `;
+                grid.appendChild(nuevaCard);
+            });
+        }
+
+        function agregarCanto() {
+            let titulo = document.getElementById('nuevoTitulo').value.trim();
+            let momento = document.getElementById('nuevoMomento').value.trim();
+            let tono = document.getElementById('nuevoTono').value.trim();
+            let letra = document.getElementById('nuevaLetra').value.trim();
+            let urlYoutube = document.getElementById('nuevoYoutube').value.trim();
+            let youtubeEmbed = convertirUrlYoutube(urlYoutube);
+            let imagen = imagenBase64Temporal;
+
+            if (!titulo || !momento || !tono) {
+                alert("Por favor completa al menos el Título, Momento y Tono.");
+                return;
+            }
+
+            let cantos = obtenerCantosStorage();
+            let nuevoCanto = {
+                id: Date.now(), // ID único basado en el tiempo actual
+                titulo: titulo,
+                momento: momento,
+                tono: tono,
+                letra: letra,
+                imagen: imagen,
+                youtube: youtubeEmbed
+            };
+
+            cantos.push(nuevoCanto);
+            localStorage.setItem('cantosLiturgicos', JSON.stringify(cantos));
+
+            // Limpiar formulario
+            document.getElementById('nuevoTitulo').value = "";
+            document.getElementById('nuevoMomento').value = "";
+            document.getElementById('nuevoTono').value = "";
+            document.getElementById('nuevaLetra').value = "";
+            document.getElementById('nuevoYoutube').value = "";
+            document.getElementById('nuevaImagen').value = "";
+            imagenBase64Temporal = "";
+
+            cargarCantosGuardados();
+            alert("¡Canto guardado permanentemente!");
+        }
+
+        function eliminarCanto(id) {
+            if (confirm("¿Estás seguro de que deseas eliminar este canto?")) {
+                let cantos = obtenerCantosStorage();
+                let cantosFiltrados = cantos.filter(canto => canto.id !== id);
+                localStorage.setItem('cantosLiturgicos', JSON.stringify(cantosFiltrados));
+                cargarCantosGuardados();
+            }
+        }
+
+        function filtrarCantos() {
+            let input = document.getElementById('searchInput').value.toLowerCase();
+            let cards = document.getElementsByClassName('card');
+
+            for (let i = 0; i < cards.length; i++) {
+                let titulo = cards[i].querySelector('h3').innerText.toLowerCase();
+                let categoria = cards[i].querySelector('.tag').innerText.toLowerCase();
+                
+                if (titulo.includes(input) || categoria.includes(input)) {
+                    cards[i].style.display = "";
+                } else {
+                    cards[i].style.display = "none";
+                }
+            }
+        }
+
+        let tonoActualIndex = 0;
+        const escala = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        
+        function abrirCantoPorId(id) {
+            let cantos = obtenerCantosStorage();
+            let canto = cantos.find(c => c.id === id);
+            if (!canto) return;
+
+            document.getElementById('modalTitulo').innerText = canto.titulo;
+            document.getElementById('modalTono').innerText = canto.tono;
+            
+            let preLetra = document.getElementById('modalLetra');
+            let imgModal = document.getElementById('modalImagen');
+            let videoContainer = document.getElementById('modalVideoContainer');
+            let iframeYoutube = document.getElementById('modalYoutube');
+
+            if (canto.letra && canto.letra.trim() !== "") {
+                preLetra.innerText = canto.letra;
+                preLetra.style.display = "block";
+            } else {
+                preLetra.style.display = "none";
+            }
+
+            if (canto.imagen && canto.imagen !== "") {
+                imgModal.src = canto.imagen;
+                imgModal.style.display = "block";
+            } else {
+                imgModal.style.display = "none";
+            }
+
+            if (canto.youtube && canto.youtube !== "") {
+                iframeYoutube.src = canto.youtube;
+                videoContainer.style.display = "block";
+            } else {
+                iframeYoutube.src = "";
+                videoContainer.style.display = "none";
+            }
+            
+            tonoActualIndex = escala.indexOf(canto.tono.toUpperCase());
+            if (tonoActualIndex === -1) tonoActualIndex = 0;
+            
+            document.getElementById('modalCanto').style.display = "block";
+        }
+
+        function cerrarCanto() {
+            let iframeYoutube = document.getElementById('modalYoutube');
+            iframeYoutube.src = ""; 
+            document.getElementById('modalCanto').style.display = "none";
+        }
+
+        function transponer(semitonos) {
+            if (tonoActualIndex === -1) return;
+            tonoActualIndex = (tonoActualIndex + semitonos + escala.length) % escala.length;
+            let nuevoTono = escala[tonoActualIndex];
+            document.getElementById('modalTono').innerText = nuevoTono;
+        }
+
+        window.onclick = function(event) {
+            let modal = document.getElementById('modalCanto');
+            if (event.target == modal) {
+                cerrarCanto();
+            }
+        }
+    </script>
+
+</body>
+</html>
